@@ -1,4 +1,4 @@
-use std::time::Instant;
+use std::{time::Instant, u32::MAX};
 
 use drillx::{
     difficulty,
@@ -9,7 +9,7 @@ use drillx::{
 fn main() {
     // Initialize gpu
     unsafe {
-        gpu_init(256);
+        gpu_init(MAX);
         set_noise(NOISE.as_usize_slice().as_ptr());
     }
 
@@ -17,8 +17,9 @@ fn main() {
     let timer = Instant::now();
     let challenge = [255; 32];
     let mut nonce = [0; 8];
+    let difficulty_up = 23;
     unsafe {
-        drill_hash(challenge.as_ptr(), nonce.as_mut_ptr(), 0);
+        drill_hash(challenge.as_ptr(), nonce.as_mut_ptr(), 0, difficulty_up);
     }
     println!("{nonce:?}");
 

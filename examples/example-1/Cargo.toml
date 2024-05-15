@@ -9,3 +9,4 @@ name = "example-1"
 [dependencies]
 drillx = { path = "../../drillx" }
 tokio = { workspace = true }
+rand = "0.8"

@@ -23,7 +23,7 @@ extern "C" void get_noise(size_t *host_data)
     cudaMemcpyFromSymbol(host_data, noise, NOISE_SIZE_BYTES, 0, cudaMemcpyDeviceToHost);
 }
 
-extern "C" void drill_hash(uint8_t *challenge, uint8_t *out, uint64_t round)
+extern "C" void drill_hash(uint8_t *challenge, uint8_t *out, uint64_t round, uint32_t up_difficulty)
 {
     // Reset global state before starting the mining operation
     if (round == 0)
@@ -45,7 +45,7 @@ extern "C" void drill_hash(uint8_t *challenge, uint8_t *out, uint64_t round)
 
     // Launch the kernel to perform the hash operation
     uint64_t stride = number_blocks * number_threads;
-    kernel_start_drill<<<number_blocks, number_threads>>>(d_challenge, stride, round, batch_size);
+    kernel_start_drill<<<number_blocks, number_threads>>>(d_challenge, stride, round, batch_size, up_difficulty);
     cudaDeviceSynchronize();
 
     // Retrieve the results back to the host
@@ -66,7 +66,8 @@ __global__ void kernel_start_drill(
     uint8_t *d_challenge,
     uint64_t stride,
     uint64_t round,
-    uint32_t batch_size)
+    uint32_t batch_size,
+    uint32_t up_difficulty)
 {
     uint64_t iters = 0;
     uint64_t nonce = threadIdx.x + (blockIdx.x * blockDim.x) + (round * stride * batch_size);
@@ -85,11 +86,17 @@ __global__ void kernel_start_drill(
             {
                 if (local_best_difficulty >= atomicMax(&global_best_difficulty, local_best_difficulty)) 
                 {
+                    
                     global_best_nonce = local_best_nonce; 
                     break;
                 } 
             }
         }
+        if (up_difficulty <= atomicMin(&global_best_difficulty, up_difficulty))
+        {
+            break;
+        }
+        
         nonce += stride;
         iters += 1;
     }

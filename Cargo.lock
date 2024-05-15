@@ -1396,6 +1396,7 @@ name = "example-1"
 version = "0.1.0"
 dependencies = [
  "drillx",
+ "rand 0.8.5",
  "tokio",
 ]
 
